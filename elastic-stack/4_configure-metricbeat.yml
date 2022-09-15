@@ -45,8 +45,11 @@
     pause: minutes=1
 
   - name: Get the state of all services and check the status of Metricbeat
-    service_facts: ~
-    failed_when: ansible_facts.services.metricbeat.state != "running"
+    service_facts:
+  - name: check the status of Metricbeat
+    fail:
+      msg: Metricbeat did not start
+    when: ansible_facts.services.metricbeat.state != "running"
 
   - name: Check if we actually have documents in Metricbeat's index
     uri:
@@ -56,7 +59,11 @@
       method: GET
       status_code:
         - 200
+      force_basic_auth: yes
       return_content: yes
       validate_certs: no
     register: response
-    failed_when: 'response.json["count"]|int == 0'
+  - name: check the Metricbeat response
+    fail:
+      msg: Metricbeat index count should be nonzero
+    when: 'response.json["count"]|int == 0'
